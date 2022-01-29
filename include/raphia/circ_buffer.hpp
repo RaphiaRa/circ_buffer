@@ -213,6 +213,11 @@ namespace raphia
          */
         size_type capacity() const noexcept;
 
+        /** clear
+         * @brief clear the buffer
+         */
+        void clear() noexcept;
+
     private:
         Alloc alloc_;
         T *buffer_;
@@ -375,8 +380,7 @@ namespace raphia
     template <class T, class Alloc>
     circ_buffer<T, Alloc>::~circ_buffer()
     {
-        while (!empty())
-            pop_back();
+        clear();
         alloc_.deallocate(buffer_, capacity_);
     }
 
@@ -577,6 +581,13 @@ namespace raphia
     typename circ_buffer<T, Alloc>::size_type circ_buffer<T, Alloc>::capacity() const noexcept
     {
         return capacity_;
+    }
+
+    template <class T, class Alloc>
+    void circ_buffer<T, Alloc>::clear() noexcept
+    {
+        while (!empty())
+            pop_back();
     }
 } // namespace raphia
 #endif

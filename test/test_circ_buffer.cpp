@@ -149,6 +149,40 @@ TEST_CASE("circ_buffer<class>::push_back()", "[inserter]")
         SECTION("p use_count is 2")
         {
             CHECK(p.use_count() == 2);
+            SECTION("pop front")
+            {
+                circ.pop_front();
+                SECTION("element is destructed")
+                {
+                    CHECK(p.use_count() == 1);
+                }
+            }
+            SECTION("pop back")
+            {
+                circ.pop_back();
+                SECTION("element is destructed")
+                {
+                    CHECK(p.use_count() == 1);
+                }
+            }
+            SECTION("clear")
+            {
+                circ.clear();
+                SECTION("element is destructed")
+                {
+                    CHECK(p.use_count() == 1);
+                }
+            }
+        }
+    }
+    SECTION("overflow buffer")
+    {
+        auto p = std::make_shared<char>();
+        for (auto _ = 32; _--;)
+            circ.push_back(p);
+        SECTION("p use_count is circ capacity + 1")
+        {
+            CHECK(p.use_count() == circ.capacity() + 1);
         }
     }
 }
