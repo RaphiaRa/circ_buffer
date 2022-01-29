@@ -96,120 +96,162 @@ namespace raphia
         virtual ~circ_buffer();
 
         /** begin
-         * @brief
+         * @brief retrieves an iterator the first element
+         * @return iterator to the first element
          */
-        iterator begin();
+        iterator begin() noexcept;
 
         /** end
-         * @brief
+         * @brief retrieves an iterator the last element
+         * @return iterator to the last element
          */
-        iterator end();
+        iterator end() noexcept;
 
         /** cbegin
-         * @brief get contant iterator to the beginning of the circ buffer
+         * @brief retrieves a constant iterator the first element
+         * @return constant iterator to the first element
          */
-        const_iterator cbegin() const;
+        const_iterator cbegin() const noexcept;
 
         /** cend
-         * @brief get constatn iterator to the end of the circ buffer
+         * @brief retrieves a constant iterator the last element
+         * @return constant iterator to the last element
          */
-        const_iterator cend() const;
+        const_iterator cend() const noexcept;
+
+        /** rbegin
+         * @brief retrieves a reverse iterator the first element
+         * @return reverse iterator to the first element
+         */
+        reverse_iterator rbegin() noexcept;
+
+        /** rend
+         * @brief retrieves a reverse iterator the last element
+         * @return reverse iterator to the last element
+         */
+        reverse_iterator rend() noexcept;
+
+        /** crbegin
+         * @brief retrieves a constant reverse iterator the first element
+         * @return constant reverse iterator to the first element
+         */
+        const_reverse_iterator crbegin() const noexcept;
+
+        /** crend
+         * @brief retrieves a constant reverse iterator the last element
+         * @return constant reverse iterator to the last element
+         */
+        const_reverse_iterator crend() const noexcept;
 
         /** push_back
-         * @brief push a value to the end of the circular buffer, 
+         * @brief add a value to the end of the circular buffer, 
          * if the buffer is full, the first element will be overwritten
-         * @param a rvalue
+         * @param a value to be added
          */
         void push_back(value_type &&a);
 
         /** push_back
-         * @brief push a value to the end of the circular buffer, 
+         * @brief add a value to the end of the circular buffer, 
          * if the buffer is full, the first element will be overwritten
+         * @param a value to be added
          */
         void push_back(const value_type &a);
 
         /** push_front
-         * @brief push a value to the front of the circular buffer, 
+         * @brief add a value to the front of the circular buffer, 
          * if the buffer is full, the last element will be overwritten
+         * @param a value to be added
          */
         void push_front(value_type &&a);
 
         /** push_front
          * @brief push a value to the front of the circular buffer, 
          * if the buffer is full, the last element will be overwritten
+         * @param a value to be added
          */
         void push_front(const value_type &a);
 
         /** size
          * @brief return the current count of elements in the buffer
+         * @return current element count in the buffer
          */
-        size_type size();
+        size_type size() const noexcept;
 
         /** empty
          * @brief check whether the buffer is empty
+         * @return true if buffer is empty
          */
-        bool empty();
+        bool empty() const noexcept;
 
         /** pop_front
-         * @brief remove the front element from the buffer
+         * @brief remove the first element from the buffer
          */
         void pop_front();
 
         /** pop_front
-         * @brief remove the back element from the buffer
+         * @brief remove the last element from the buffer
          */
         void pop_back();
 
         /** front
-         * @brief access front element
-         * @return reference to the front element
+         * @brief access the first element in the buffer
+         * @return reference to the first element
+         * @throw overflow exception if the buffer is empty
          */
         reference &front();
 
         /** front
-         * @brief access front element
-         * @return const reference to the front element
+         * @brief access the first element in the buffer
+         * @return const reference to the first element
+         * @throw overflow exception if the buffer is empty
          */
         const_reference &front() const;
 
         /** back
-         * @brief access back element
-         * @return reference to the back element
+         * @brief access the last element in the buffer
+         * @return reference to the last element
+         * @throw overflow exception if the buffer is empty
          */
         reference &back();
 
         /** back
-         * @brief access back element
-         * @return const reference to the back element
+         * @brief access the last element in the buffer
+         * @return const reference to the last element
+         * @throw overflow exception if the buffer is empty
          */
         const_reference &back() const;
 
         /** operator[]
-         * @brief access element by index
-         * @return reference to element at the given index
+         * @brief access an element by index
+         * @return reference to the element at the given index
+         * @throw out_of_range exception if the index lies not in the buffer range
          */
         reference &operator[](int idx);
 
         /** operator[]
-         * @brief access element by index
-         * @return cosnt_reference to element at the given index
+         * @brief access an element by index
+         * @return const reference to the element at the given index
+         * @throw out_of_range exception if the index lies not in the buffer range
          */
         const_reference &operator[](int idx) const;
 
         /** operator[]
-         * @brief access element by index
-         * @return reference to element at the given index
+         * @brief access an element by index
+         * @return reference to the element at the given index
+         * @throw out_of_range exception if the index lies not in the buffer range
          */
         reference &at(int idx);
 
         /** operator[]
-         * @brief access element by index
-         * @return const_reference to element at the given index
+         * @brief access an element by index
+         * @return const reference to the element at the given index
+         * @throw out_of_range exception if the index lies not in the buffer range
          */
         const_reference &at(int idx) const;
 
         /** capacity
-         * @brief get the buffer capactiry
+         * @brief get the buffer capacity
+         * @return buffer capacity
          */
         size_type capacity() const noexcept;
 
@@ -386,30 +428,58 @@ namespace raphia
 
     template <class T, class Alloc>
     typename circ_buffer<T, Alloc>::iterator
-    circ_buffer<T, Alloc>::begin()
+    circ_buffer<T, Alloc>::begin() noexcept
     {
         return iterator(0, *this);
     }
 
     template <class T, class Alloc>
     typename circ_buffer<T, Alloc>::iterator
-    circ_buffer<T, Alloc>::end()
+    circ_buffer<T, Alloc>::end() noexcept
     {
         return iterator(end_off_, *this);
     }
 
     template <class T, class Alloc>
     typename circ_buffer<T, Alloc>::const_iterator
-    circ_buffer<T, Alloc>::cbegin() const
+    circ_buffer<T, Alloc>::cbegin() const noexcept
     {
         return const_iterator(0, *this);
     }
 
     template <class T, class Alloc>
     typename circ_buffer<T, Alloc>::const_iterator
-    circ_buffer<T, Alloc>::cend() const
+    circ_buffer<T, Alloc>::cend() const noexcept
     {
         return const_iterator(end_off_, *this);
+    }
+
+    template <class T, class Alloc>
+    typename circ_buffer<T, Alloc>::reverse_iterator
+    circ_buffer<T, Alloc>::rbegin() noexcept
+    {
+        return std::reverse_iterator<iterator>(begin());
+    }
+
+    template <class T, class Alloc>
+    typename circ_buffer<T, Alloc>::reverse_iterator
+    circ_buffer<T, Alloc>::rend() noexcept
+    {
+        return std::reverse_iterator<iterator>(end());
+    }
+
+    template <class T, class Alloc>
+    typename circ_buffer<T, Alloc>::const_reverse_iterator
+    circ_buffer<T, Alloc>::crbegin() const noexcept
+    {
+        return std::reverse_iterator<const_iterator>(cbegin());
+    }
+
+    template <class T, class Alloc>
+    typename circ_buffer<T, Alloc>::const_reverse_iterator
+    circ_buffer<T, Alloc>::crend() const noexcept
+    {
+        return std::reverse_iterator<const_iterator>(cend());
     }
 
     template <class T, class Alloc>
@@ -462,13 +532,13 @@ namespace raphia
 
     template <class T, class Alloc>
     typename circ_buffer<T, Alloc>::size_type
-    circ_buffer<T, Alloc>::size()
+    circ_buffer<T, Alloc>::size() const noexcept
     {
         return end_off_;
     }
 
     template <class T, class Alloc>
-    bool circ_buffer<T, Alloc>::empty()
+    bool circ_buffer<T, Alloc>::empty() const noexcept
     {
         return size() == 0;
     }
