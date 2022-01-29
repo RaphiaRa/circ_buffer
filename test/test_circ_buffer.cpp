@@ -89,37 +89,70 @@ TEST_CASE("circ_buffer::circ_buffer(const circ_buffer&)", "[ctor]")
 TEST_CASE("circ_buffer::push_back()", "[inserter]")
 {
     raphia::circ_buffer<char> circ(8);
-    circ.push_back('h');
-    SECTION("size is 1")
+    SECTION("push one element")
     {
-        CHECK(circ.size() == 1);
+        circ.push_back('h');
+        SECTION("size is 1")
+        {
+            CHECK(circ.size() == 1);
+        }
+        SECTION("is not empty")
+        {
+            CHECK(!circ.empty());
+        }
+        SECTION("begin points to first element")
+        {
+            CHECK(*circ.begin() == 'h');
+            CHECK(*circ.cbegin() == 'h');
+        }
     }
-    SECTION("is not empty")
+    SECTION("push range of elements to overflow the buffer")
     {
-        CHECK(!circ.empty());
-    }
-    SECTION("begin points to first element")
-    {
-        CHECK(*circ.begin() == 'h');
-        CHECK(*circ.cbegin() == 'h');
+        std::string str = "Hello World";
+        std::copy(str.begin(), str.end(), std::back_inserter(circ));
+        SECTION("size is 8")
+        {
+            CHECK(circ.size() == 8);
+        }
+        SECTION("string has been overwritten")
+        {
+            CHECK(std::string(circ.begin(), circ.end()) == "lo World");
+        }
     }
 }
 
 TEST_CASE("circ_buffer::push_front()", "[inserter]")
 {
+
     raphia::circ_buffer<char> circ(8);
-    circ.push_front('h');
-    SECTION("size is 1")
+    SECTION("add one element")
     {
-        CHECK(circ.size() == 1);
+        circ.push_front('h');
+        SECTION("size is 1")
+        {
+            CHECK(circ.size() == 1);
+        }
+        SECTION("is not empty")
+        {
+            CHECK(!circ.empty());
+        }
+        SECTION("begin points to first element")
+        {
+            CHECK(*circ.begin() == 'h');
+            CHECK(*circ.cbegin() == 'h');
+        }
     }
-    SECTION("is not empty")
+    SECTION("push range of elements to overflow the buffer")
     {
-        CHECK(!circ.empty());
-    }
-    SECTION("begin points to first element")
-    {
-        CHECK(*circ.begin() == 'h');
-        CHECK(*circ.cbegin() == 'h');
+        std::string str = "Hello World";
+        std::copy(str.begin(), str.end(), std::front_inserter(circ));
+        SECTION("size is 8")
+        {
+            CHECK(circ.size() == 8);
+        }
+        SECTION("string has been overwritten")
+        {
+            CHECK(std::string(circ.begin(), circ.end()) == "dlroW ol");
+        }
     }
 }

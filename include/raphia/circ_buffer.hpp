@@ -20,19 +20,19 @@ namespace raphia
             using reference = U &;
             using container = std::conditional_t<std::is_const<U>::value, const circ_buffer<T, Alloc> &, circ_buffer<T, Alloc> &>;
 
-            reference operator*() const { return *ptr_; }
-            pointer operator->() { return ptr_; }
+            reference operator*() const;
+            pointer operator->();
             basic_iterator &operator++();
             basic_iterator operator++(int);
             typename basic_iterator::difference_type operator-(const basic_iterator &it) const;
 
-            basic_iterator(pointer ptr, container &circ_buffer)
-                : ptr_(ptr), circ_(circ_buffer) {}
-            friend bool operator==(const basic_iterator &a, const basic_iterator &b) { return a.ptr_ == b.ptr_; };
-            friend bool operator!=(const basic_iterator &a, const basic_iterator &b) { return a.ptr_ != b.ptr_; };
+            basic_iterator(difference_type offset, container &circ_buffer)
+                : offset_(offset), circ_(circ_buffer) {}
+            friend bool operator==(const basic_iterator &a, const basic_iterator &b) { return a.offset_ == b.offset_; };
+            friend bool operator!=(const basic_iterator &a, const basic_iterator &b) { return a.offset_ != b.offset_; };
 
         private:
-            pointer ptr_;
+            difference_type offset_;
             container circ_;
         };
 
@@ -54,10 +54,10 @@ namespace raphia
         circ_buffer<T, Alloc> &operator=(const circ_buffer &);
         circ_buffer<T, Alloc> &operator=(circ_buffer &&) noexcept;
         virtual ~circ_buffer();
-        iterator begin() { return iterator(begin_, *this); }
-        iterator end() { return iterator(end_, *this); }
-        const_iterator cbegin() const { return const_iterator(begin_, *this); }
-        const_iterator cend() const { return const_iterator(end_, *this); }
+        iterator begin();
+        iterator end();
+        const_iterator cbegin() const;
+        const_iterator cend() const;
         void push_back(value_type &&a);
         void push_back(const value_type &a);
         void push_front(value_type &&a);
@@ -87,12 +87,30 @@ namespace raphia
 
     template <class T, class Alloc>
     template <class ValueType>
+    typename circ_buffer<T, Alloc>::template basic_iterator<ValueType>::reference
+    circ_buffer<T, Alloc>::basic_iterator<ValueType>::operator*() const
+    {
+        auto p = circ_.begin_ + offset_;
+        p = p < &circ_.buffer_[circ_.capacity_] ? p : p - circ_.capacity_;
+        return *p;
+    }
+
+    template <class T, class Alloc>
+    template <class ValueType>
+    typename circ_buffer<T, Alloc>::template basic_iterator<ValueType>::pointer
+    circ_buffer<T, Alloc>::basic_iterator<ValueType>::operator->()
+    {
+        auto p = circ_.begin_ + offset_;
+        p = p < &circ_.buffer_[circ_.capacity_] ? p : p - circ_.capacity_;
+        return p;
+    }
+
+    template <class T, class Alloc>
+    template <class ValueType>
     typename circ_buffer<T, Alloc>::template basic_iterator<ValueType> &
     circ_buffer<T, Alloc>::basic_iterator<ValueType>::operator++()
     {
-        ++ptr_;
-        if (ptr_ == &circ_.buffer_[circ_.capacity_])
-            ptr_ = &circ_.buffer_[0];
+        ++offset_;
         return *this;
     }
 
@@ -102,9 +120,7 @@ namespace raphia
     circ_buffer<T, Alloc>::basic_iterator<ValueType>::operator++(int)
     {
         basic_iterator tmp = *this;
-        ptr_++;
-        if (ptr_ == &circ_.buffer_[circ_.capacity_])
-            ptr_ = &circ_.buffer_[0];
+        ++offset_;
         return tmp;
     }
 
@@ -113,10 +129,7 @@ namespace raphia
     typename circ_buffer<T, Alloc>::template basic_iterator<ValueType>::difference_type
     circ_buffer<T, Alloc>::basic_iterator<ValueType>::operator-(const basic_iterator<ValueType> &it) const
     {
-        if (ptr_ - it.ptr_ >= 0)
-            return ptr_ - it.ptr_;
-        else
-            return &circ_.buffer_[circ_.capacity_] - &circ_.buffer_[0] + it.ptr_ - ptr_;
+        return offset_ - it.offset_;
     }
 
     template <class T, class Alloc>
@@ -219,6 +232,38 @@ namespace raphia
         while (!empty())
             pop_back();
         alloc_.deallocate(buffer_, capacity_);
+    }
+
+    template <class T, class Alloc>
+    typename circ_buffer<T, Alloc>::iterator
+    circ_buffer<T, Alloc>::begin()
+    {
+        return iterator(0, *this);
+    }
+
+    template <class T, class Alloc>
+    typename circ_buffer<T, Alloc>::iterator
+    circ_buffer<T, Alloc>::end()
+    {
+        if (begin_ == end_)
+            return iterator(full_ ? capacity_ : 0, *this);
+        return iterator(begin_ < end_ ? end_ - begin_ : end_ - &buffer_[0] + &buffer_[capacity_] - begin_, *this);
+    }
+
+    template <class T, class Alloc>
+    typename circ_buffer<T, Alloc>::const_iterator
+    circ_buffer<T, Alloc>::cbegin() const
+    {
+        return const_iterator(0, *this);
+    }
+
+    template <class T, class Alloc>
+    typename circ_buffer<T, Alloc>::const_iterator
+    circ_buffer<T, Alloc>::cend() const
+    {
+        if (begin_ == end_)
+            return const_iterator(full_ ? capacity_ : 0, *this);
+        return const_iterator(begin_ < end_ ? end_ - begin_ : end_ - &buffer_[0] + &buffer_[capacity_] - begin_, *this);
     }
 
     template <class T, class Alloc>
