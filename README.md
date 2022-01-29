@@ -1,4 +1,7 @@
 # circ_buffer
+**Requirements**  
+A compiler that supports at least C++11
+
 **Installation**  
 Copy the header file into your project and rename the namespace to whatever you want.
 
@@ -53,4 +56,14 @@ Output:
 The behaviour of the ring buffer is similar when emblace_back is used.
 On the contrary, if data is pushed into the buffer via push_front, then
 the data in the back will be overwritten if the buffer is full.
+
+**Building Tests**
+```bash
+git clone git@github.com:RaphiaRa/circ_buffer.git
+mkdir circ_buffer/build; cd circ_buffer/build;
+git submodule update --init
+cmake ../
+make
+./Test
+```
 
