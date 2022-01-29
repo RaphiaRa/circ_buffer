@@ -96,7 +96,7 @@ TEST_CASE("circ_buffer::circ_buffer(const circ_buffer&)", "[ctor]")
     }
 }
 
-TEST_CASE("circ_buffer::push_back()", "[inserter]")
+TEST_CASE("circ_buffer::push_back()", "[modifier]")
 {
     raphia::circ_buffer<char> circ(8);
     SECTION("push one element")
@@ -139,7 +139,7 @@ TEST_CASE("circ_buffer::push_back()", "[inserter]")
     }
 }
 
-TEST_CASE("circ_buffer<class>::push_back()", "[inserter]")
+TEST_CASE("circ_buffer<class>::push_back()", "[modifier]")
 {
     raphia::circ_buffer<std::shared_ptr<char>> circ(8);
     SECTION("push one element")
@@ -187,7 +187,7 @@ TEST_CASE("circ_buffer<class>::push_back()", "[inserter]")
     }
 }
 
-TEST_CASE("circ_buffer::push_front()", "[inserter]")
+TEST_CASE("circ_buffer::push_front()", "[modifier]")
 {
     raphia::circ_buffer<char> circ(8);
     SECTION("add one element")
@@ -222,7 +222,7 @@ TEST_CASE("circ_buffer::push_front()", "[inserter]")
     }
 }
 
-TEST_CASE("circ_buffer::emblace_front()", "[inserter]")
+TEST_CASE("circ_buffer::emblace_front()", "[modifier]")
 {
     class TestObject
     {
@@ -247,7 +247,7 @@ TEST_CASE("circ_buffer::emblace_front()", "[inserter]")
     }
 }
 
-TEST_CASE("circ_buffer::emblace_back()", "[inserter]")
+TEST_CASE("circ_buffer::emblace_back()", "[modifier]")
 {
     class TestObject
     {

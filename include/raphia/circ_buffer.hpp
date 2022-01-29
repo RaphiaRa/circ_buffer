@@ -15,17 +15,17 @@ namespace raphia
         /** basic_iterator
          * @brief bidirectional iterator
          */
-        template <class U>
+        template <class Container, class ValueType>
         struct basic_iterator
         {
             using iterator_category = std::forward_iterator_tag;
             using difference_type = std::ptrdiff_t;
-            using value_type = typename U::value_type;
+            using value_type = ValueType;
             using pointer = value_type *;
             using reference = value_type &;
-            using container_ref = U &;
+            using container = Container;
 
-            basic_iterator(difference_type offset, container_ref circ_buffer)
+            basic_iterator(difference_type offset, container &circ_buffer)
                 : offset_(offset), circ_(circ_buffer) {}
 
             reference operator*() const;
@@ -41,15 +41,15 @@ namespace raphia
 
         private:
             difference_type offset_;
-            container_ref circ_;
+            container &circ_;
         };
 
         using value_type = T;
         using reference = value_type &;
         using const_reference = const value_type &;
         using size_type = std::size_t;
-        using iterator = basic_iterator<circ_buffer<T, Alloc>>;
-        using const_iterator = basic_iterator<const circ_buffer<T, Alloc>>;
+        using iterator = basic_iterator<circ_buffer<T, Alloc>, T>;
+        using const_iterator = basic_iterator<const circ_buffer<T, Alloc>, const T>;
         using reverse_iterator = std::reverse_iterator<iterator>;
         using const_reverse_iterator = std::reverse_iterator<const_iterator>;
 
@@ -151,7 +151,7 @@ namespace raphia
          */
         const_reverse_iterator crend() const noexcept;
 
-        /** Inserters **/
+        /** Modifiers **/
 
         /** push_back
          * @brief add a value to the end of the circular buffer, 
@@ -297,9 +297,9 @@ namespace raphia
     };
 
     template <class T, class Alloc>
-    template <class ValueType>
-    typename circ_buffer<T, Alloc>::template basic_iterator<ValueType>::reference
-    circ_buffer<T, Alloc>::basic_iterator<ValueType>::operator*() const
+    template <class Container, class ValueType>
+    typename circ_buffer<T, Alloc>::template basic_iterator<Container, ValueType>::reference
+    circ_buffer<T, Alloc>::basic_iterator<Container, ValueType>::operator*() const
     {
         auto p = circ_.begin_ + offset_;
         p = p < &circ_.buffer_[circ_.capacity_] ? p : p - circ_.capacity_;
@@ -307,9 +307,9 @@ namespace raphia
     }
 
     template <class T, class Alloc>
-    template <class ValueType>
-    typename circ_buffer<T, Alloc>::template basic_iterator<ValueType>::pointer
-    circ_buffer<T, Alloc>::basic_iterator<ValueType>::operator->()
+    template <class Container, class ValueType>
+    typename circ_buffer<T, Alloc>::template basic_iterator<Container, ValueType>::pointer
+    circ_buffer<T, Alloc>::basic_iterator<Container, ValueType>::operator->()
     {
         auto p = circ_.begin_ + offset_;
         p = p < &circ_.buffer_[circ_.capacity_] ? p : p - circ_.capacity_;
@@ -317,18 +317,18 @@ namespace raphia
     }
 
     template <class T, class Alloc>
-    template <class ValueType>
-    typename circ_buffer<T, Alloc>::template basic_iterator<ValueType> &
-    circ_buffer<T, Alloc>::basic_iterator<ValueType>::operator++()
+    template <class Container, class ValueType>
+    typename circ_buffer<T, Alloc>::template basic_iterator<Container, ValueType> &
+    circ_buffer<T, Alloc>::basic_iterator<Container, ValueType>::operator++()
     {
         ++offset_;
         return *this;
     }
 
     template <class T, class Alloc>
-    template <class ValueType>
-    typename circ_buffer<T, Alloc>::template basic_iterator<ValueType>
-    circ_buffer<T, Alloc>::basic_iterator<ValueType>::operator++(int)
+    template <class Container, class ValueType>
+    typename circ_buffer<T, Alloc>::template basic_iterator<Container, ValueType>
+    circ_buffer<T, Alloc>::basic_iterator<Container, ValueType>::operator++(int)
     {
         basic_iterator tmp = *this;
         ++offset_;
@@ -336,18 +336,18 @@ namespace raphia
     }
 
     template <class T, class Alloc>
-    template <class ValueType>
-    typename circ_buffer<T, Alloc>::template basic_iterator<ValueType> &
-    circ_buffer<T, Alloc>::basic_iterator<ValueType>::operator--()
+    template <class Container, class ValueType>
+    typename circ_buffer<T, Alloc>::template basic_iterator<Container, ValueType> &
+    circ_buffer<T, Alloc>::basic_iterator<Container, ValueType>::operator--()
     {
         --offset_;
         return *this;
     }
 
     template <class T, class Alloc>
-    template <class ValueType>
-    typename circ_buffer<T, Alloc>::template basic_iterator<ValueType>
-    circ_buffer<T, Alloc>::basic_iterator<ValueType>::operator--(int)
+    template <class Container, class ValueType>
+    typename circ_buffer<T, Alloc>::template basic_iterator<Container, ValueType>
+    circ_buffer<T, Alloc>::basic_iterator<Container, ValueType>::operator--(int)
     {
         basic_iterator tmp = *this;
         --offset_;
@@ -355,9 +355,9 @@ namespace raphia
     }
 
     template <class T, class Alloc>
-    template <class ValueType>
-    typename circ_buffer<T, Alloc>::template basic_iterator<ValueType>::difference_type
-    circ_buffer<T, Alloc>::basic_iterator<ValueType>::operator-(const basic_iterator<ValueType> &it) const
+    template <class Container, class ValueType>
+    typename circ_buffer<T, Alloc>::template basic_iterator<Container, ValueType>::difference_type
+    circ_buffer<T, Alloc>::basic_iterator<Container, ValueType>::operator-(const basic_iterator<Container, ValueType> &it) const
     {
         return offset_ - it.offset_;
     }
