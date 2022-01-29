@@ -121,6 +121,20 @@ TEST_CASE("circ_buffer::push_back()", "[inserter]")
     }
 }
 
+TEST_CASE("circ_buffer<class>::push_back()", "[inserter]")
+{
+    raphia::circ_buffer<std::shared_ptr<char>> circ(8);
+    SECTION("push one element")
+    {
+        auto p = std::make_shared<char>();
+        circ.push_back(p);
+        SECTION("p use_count is 2")
+        {
+            CHECK(p.use_count() == 2);
+        }
+    }
+}
+
 TEST_CASE("circ_buffer::push_front()", "[inserter]")
 {
     raphia::circ_buffer<char> circ(8);
