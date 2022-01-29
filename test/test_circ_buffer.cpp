@@ -272,6 +272,45 @@ TEST_CASE("circ_buffer::emblace_back()", "[modifier]")
     }
 }
 
+TEST_CASE("circ_buffer::resize()", "[modifier]")
+{
+    SECTION("we have a circ buffer of primitive values")
+    {
+        raphia::circ_buffer<char> circ(8);
+        SECTION("fill buffer")
+        {
+            std::string str = "Hello";
+            std::copy(str.begin(), str.end(), std::back_inserter(circ));
+            SECTION("resize the buffer")
+            {
+                circ.resize(64);
+                SECTION("content is ok")
+                {
+                    CHECK(std::string(circ.begin(), circ.end()) == "Hello");
+                }
+            }
+        }
+    }
+    SECTION("we have a circ buffer of class objects")
+    {
+        raphia::circ_buffer<std::shared_ptr<char>> circ(8);
+        SECTION("fill buffer")
+        {
+            std::shared_ptr<char> p = std::make_shared<char>();
+            for (auto _ = 5; _--;)
+                circ.push_back(p);
+            SECTION("resize the buffer")
+            {
+                circ.resize(64);
+                SECTION("content is ok")
+                {
+                    CHECK(p.use_count() == 6);
+                }
+            }
+        }
+    }
+}
+
 TEST_CASE("circ_buffer::iterator::operator++", "[increment]")
 {
     std::string str = "Hello World";

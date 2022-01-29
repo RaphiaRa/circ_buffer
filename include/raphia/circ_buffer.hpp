@@ -210,6 +210,11 @@ namespace raphia
          */
         void clear() noexcept;
 
+        /** resize
+         * @brief resize the buffer
+         */
+        void resize(size_type);
+
         /** Capacity Methods **/
 
         /** size
@@ -718,6 +723,26 @@ namespace raphia
     {
         while (!empty())
             pop_back();
+    }
+
+    template <class T, class Alloc>
+    void circ_buffer<T, Alloc>::resize(size_type size)
+    {
+        if (size <= capacity_)
+            return;
+        auto new_buffer = alloc_.allocate(size);
+        size_type offset = 0;
+        for (auto iter = begin(); iter != end(); ++iter)
+        {
+            std::allocator_traits<Alloc>::construct(alloc_, new_buffer + offset, std::move(*iter));
+            ++offset;
+            offset %= size;
+        }
+        clear();
+        buffer_ = new_buffer;
+        begin_ = new_buffer;
+        capacity_ = size;
+        end_off_ = offset;
     }
 } // namespace raphia
 #endif
