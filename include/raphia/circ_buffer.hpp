@@ -739,6 +739,7 @@ namespace raphia
             offset %= size;
         }
         clear();
+        alloc_.deallocate(buffer_, capacity_);
         buffer_ = new_buffer;
         begin_ = new_buffer;
         capacity_ = size;
