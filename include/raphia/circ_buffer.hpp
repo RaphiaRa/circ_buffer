@@ -20,10 +20,13 @@ namespace raphia
         {
             using iterator_category = std::forward_iterator_tag;
             using difference_type = std::ptrdiff_t;
-            using value_type = U;
-            using pointer = U *;
-            using reference = U &;
-            using container = std::conditional_t<std::is_const<U>::value, const circ_buffer<T, Alloc> &, circ_buffer<T, Alloc> &>;
+            using value_type = typename U::value_type;
+            using pointer = value_type *;
+            using reference = value_type &;
+            using container_ref = U &;
+
+            basic_iterator(difference_type offset, container_ref circ_buffer)
+                : offset_(offset), circ_(circ_buffer) {}
 
             reference operator*() const;
             pointer operator->();
@@ -33,24 +36,22 @@ namespace raphia
             basic_iterator operator--(int);
             typename basic_iterator::difference_type operator-(const basic_iterator &it) const;
 
-            basic_iterator(difference_type offset, container &circ_buffer)
-                : offset_(offset), circ_(circ_buffer) {}
             friend bool operator==(const basic_iterator &a, const basic_iterator &b) { return a.offset_ == b.offset_; };
             friend bool operator!=(const basic_iterator &a, const basic_iterator &b) { return a.offset_ != b.offset_; };
 
         private:
             difference_type offset_;
-            container circ_;
+            container_ref circ_;
         };
 
         using value_type = T;
         using reference = value_type &;
         using const_reference = const value_type &;
-        using iterator = basic_iterator<T>;
-        using const_iterator = basic_iterator<const T>;
+        using size_type = std::size_t;
+        using iterator = basic_iterator<circ_buffer<T, Alloc>>;
+        using const_iterator = basic_iterator<const circ_buffer<T, Alloc>>;
         using reverse_iterator = std::reverse_iterator<iterator>;
         using const_reverse_iterator = std::reverse_iterator<const_iterator>;
-        using size_type = std::size_t;
 
         /** circ_buffer
          * @brief default constructor
