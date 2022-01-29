@@ -22,6 +22,11 @@ TEST_CASE("circ_buffer::circ_buffer()", "[ctor]")
         CHECK(circ.begin() == circ.end());
         CHECK(circ.cbegin() == circ.cend());
     }
+    SECTION("back and front throw")
+    {
+        CHECK_THROWS(circ.front());
+        CHECK_THROWS(circ.back());
+    }
 }
 
 TEST_CASE("circ_buffer::circ_buffer(size_type)", "[ctor]")
@@ -43,6 +48,11 @@ TEST_CASE("circ_buffer::circ_buffer(size_type)", "[ctor]")
     {
         CHECK(circ.begin() == circ.end());
         CHECK(circ.cbegin() == circ.cend());
+    }
+    SECTION("back and front throw")
+    {
+        CHECK_THROWS(circ.front());
+        CHECK_THROWS(circ.back());
     }
 }
 
@@ -104,6 +114,14 @@ TEST_CASE("circ_buffer::push_back()", "[inserter]")
         {
             CHECK(*circ.begin() == 'h');
             CHECK(*circ.cbegin() == 'h');
+        }
+        SECTION("front points to the element")
+        {
+            CHECK(circ.front() == 'h');
+        }
+        SECTION("back points to the element")
+        {
+            CHECK(circ.back() == 'h');
         }
     }
     SECTION("push range of elements to overflow the buffer")

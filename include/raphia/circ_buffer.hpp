@@ -414,7 +414,10 @@ namespace raphia
         if (end_off_ == capacity_)
             pop_front();
         auto p = begin_ + end_off_ < &buffer_[capacity_] ? begin_ + end_off_ : begin_ + end_off_ - capacity_;
-        *p = std::move(a);
+        if (std::is_class<T>::value)
+            new (p) T(std::move(a));
+        else
+            *p = std::move(a);
         ++end_off_;
     }
 
@@ -424,7 +427,10 @@ namespace raphia
         if (end_off_ == capacity_)
             pop_front();
         auto p = begin_ + end_off_ < &buffer_[capacity_] ? begin_ + end_off_ : begin_ + end_off_ - capacity_;
-        *p = a;
+        if (std::is_class<T>::value)
+            new (p) T(a);
+        else
+            *p = std::move(a);
         ++end_off_;
     }
 
@@ -481,9 +487,9 @@ namespace raphia
     {
         if (size() > 0)
         {
-            --end_off_;
             if (std::is_class<T>::value)
                 back() = T();
+            --end_off_;
         }
     }
 
@@ -508,7 +514,8 @@ namespace raphia
     {
         if (empty())
             throw std::underflow_error("circ_buffer: tried to access empty container");
-        auto p = begin_ + end_off_ < &buffer_[capacity_] ? begin_ + end_off_ : begin_ + end_off_ - capacity_;
+        auto p = begin_ + end_off_ - 1;
+        p = p < &buffer_[capacity_] ? p : p - capacity_;
         return *p;
     }
 
@@ -517,7 +524,8 @@ namespace raphia
     {
         if (empty())
             throw std::underflow_error("circ_buffer: tried to access empty container");
-        auto p = begin_ + end_off_ < &buffer_[capacity_] ? begin_ + end_off_ : begin_ + end_off_ - capacity_;
+        auto p = begin_ + end_off_ - 1;
+        p = p < &buffer_[capacity_] ? p : p - capacity_;
         return *p;
     }
 
