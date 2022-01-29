@@ -522,7 +522,7 @@ namespace raphia
             pop_front();
         auto p = begin_ + end_off_ < &buffer_[capacity_] ? begin_ + end_off_ : begin_ + end_off_ - capacity_;
         if (std::is_class<T>::value)
-            new (p) T(std::move(a));
+            std::allocator_traits<Alloc>::construct(alloc_, p, std::move(a));
         else
             *p = std::move(a);
         ++end_off_;
@@ -535,7 +535,7 @@ namespace raphia
             pop_front();
         auto p = begin_ + end_off_ < &buffer_[capacity_] ? begin_ + end_off_ : begin_ + end_off_ - capacity_;
         if (std::is_class<T>::value)
-            new (p) T(a);
+            std::allocator_traits<Alloc>::construct(alloc_, p, a);
         else
             *p = std::move(a);
         ++end_off_;
@@ -549,7 +549,7 @@ namespace raphia
         if (begin_ == &buffer_[0])
             begin_ = &buffer_[capacity_];
         if (std::is_class<T>::value)
-            new (--begin_) T(a);
+            std::allocator_traits<Alloc>::construct(alloc_, --begin_, std::move(a));
         else
             *(--begin_) = std::move(a);
         ++end_off_;
@@ -563,7 +563,7 @@ namespace raphia
         if (begin_ == &buffer_[0])
             begin_ = &buffer_[capacity_];
         if (std::is_class<T>::value)
-            new (--begin_) T(a);
+            std::allocator_traits<Alloc>::construct(alloc_, --begin_, a);
         else
             *(--begin_) = a;
         ++end_off_;
