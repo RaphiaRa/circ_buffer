@@ -123,7 +123,6 @@ TEST_CASE("circ_buffer::push_back()", "[inserter]")
 
 TEST_CASE("circ_buffer::push_front()", "[inserter]")
 {
-
     raphia::circ_buffer<char> circ(8);
     SECTION("add one element")
     {
@@ -155,4 +154,9 @@ TEST_CASE("circ_buffer::push_front()", "[inserter]")
             CHECK(std::string(circ.begin(), circ.end()) == "dlroW ol");
         }
     }
+}
+
+TEST_CASE("circ_buffer::iterator::++", "[incrementer]")
+{
+    raphia::circ_buffer<char> circ(8);
 }
