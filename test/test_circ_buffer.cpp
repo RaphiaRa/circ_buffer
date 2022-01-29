@@ -156,7 +156,33 @@ TEST_CASE("circ_buffer::push_front()", "[inserter]")
     }
 }
 
-TEST_CASE("circ_buffer::iterator::++", "[incrementer]")
+TEST_CASE("circ_buffer::iterator::operator++", "[increment]")
 {
-    raphia::circ_buffer<char> circ(8);
+    std::string str = "Hello World";
+    raphia::circ_buffer<char> circ(str.begin(), str.end());
+    auto iter = circ.begin();
+    SECTION("increment iterator")
+    {
+        CHECK(*iter++ == 'H');
+        CHECK(*iter++ == 'e');
+        CHECK(*iter++ == 'l');
+        CHECK(*iter++ == 'l');
+        CHECK(*iter++ == 'o');
+    }
+}
+
+TEST_CASE("circ_buffer::iterator::operator--", "[decremenent]")
+{
+    std::string str = "Hello World";
+    raphia::circ_buffer<char> circ(str.begin(), str.end());
+    auto iter = circ.end();
+    --iter;
+    SECTION("decrement iterator")
+    {
+        CHECK(*iter-- == 'd');
+        CHECK(*iter-- == 'l');
+        CHECK(*iter-- == 'r');
+        CHECK(*iter-- == 'o');
+        CHECK(*iter-- == 'W');
+    }
 }

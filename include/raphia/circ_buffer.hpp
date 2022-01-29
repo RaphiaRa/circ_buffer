@@ -30,6 +30,8 @@ namespace raphia
             pointer operator->();
             basic_iterator &operator++();
             basic_iterator operator++(int);
+            basic_iterator &operator--();
+            basic_iterator operator--(int);
             typename basic_iterator::difference_type operator-(const basic_iterator &it) const;
 
             basic_iterator(difference_type offset, container &circ_buffer)
@@ -255,6 +257,25 @@ namespace raphia
     {
         basic_iterator tmp = *this;
         ++offset_;
+        return tmp;
+    }
+
+    template <class T, class Alloc>
+    template <class ValueType>
+    typename circ_buffer<T, Alloc>::template basic_iterator<ValueType> &
+    circ_buffer<T, Alloc>::basic_iterator<ValueType>::operator--()
+    {
+        --offset_;
+        return *this;
+    }
+
+    template <class T, class Alloc>
+    template <class ValueType>
+    typename circ_buffer<T, Alloc>::template basic_iterator<ValueType>
+    circ_buffer<T, Alloc>::basic_iterator<ValueType>::operator--(int)
+    {
+        basic_iterator tmp = *this;
+        --offset_;
         return tmp;
     }
 
