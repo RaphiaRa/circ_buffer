@@ -1,6 +1,6 @@
 #include "raphia/circ_buffer.hpp"
 #include <catch2/catch.hpp>
-#include <cstring>
+#include <string>
 
 TEST_CASE("circ_buffer::circ_buffer()", "[ctor]")
 {
