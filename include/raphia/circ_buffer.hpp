@@ -1,6 +1,5 @@
 #ifndef RAPHIA_CIRC_BUFFER_HPP
 #define RAPHIA_CIRC_BUFFER_HPP
-#include <cassert>
 #include <stdexcept>
 #include <memory>
 
