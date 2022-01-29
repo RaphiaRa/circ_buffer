@@ -45,8 +45,14 @@ namespace raphia
         using const_reverse_iterator = std::reverse_iterator<const_iterator>;
         using size_type = std::size_t;
 
-        circ_buffer();
-        explicit circ_buffer(size_type count);
+        circ_buffer(const Alloc &a = Alloc());
+        explicit circ_buffer(size_type count, const Alloc &a = Alloc());
+        template <class Iter>
+        circ_buffer(Iter begin, Iter end, const Alloc &a = Alloc());
+        circ_buffer(const circ_buffer &);
+        circ_buffer(circ_buffer &&) noexcept;
+        circ_buffer<T, Alloc> &operator=(const circ_buffer &);
+        circ_buffer<T, Alloc> &operator=(circ_buffer &&) noexcept;
         virtual ~circ_buffer();
         iterator begin() { return iterator(begin_, *this); }
         iterator end() { return iterator(end_, *this); }
@@ -114,9 +120,9 @@ namespace raphia
     }
 
     template <class T, class Alloc>
-    circ_buffer<T, Alloc>::circ_buffer()
+    circ_buffer<T, Alloc>::circ_buffer(const Alloc &a)
         : full_(true),
-          alloc_(),
+          alloc_(a),
           buffer_(nullptr),
           begin_(nullptr),
           end_(nullptr),
@@ -125,14 +131,86 @@ namespace raphia
     }
 
     template <class T, class Alloc>
-    circ_buffer<T, Alloc>::circ_buffer(size_type count)
+    circ_buffer<T, Alloc>::circ_buffer(size_type count, const Alloc &a)
         : full_(false),
-          alloc_(),
+          alloc_(a),
           buffer_(alloc_.allocate(count)),
           begin_(&buffer_[0]),
           end_(&buffer_[0]),
           capacity_(count)
     {
+    }
+
+    template <class T, class Alloc>
+    template <class Iter>
+    circ_buffer<T, Alloc>::circ_buffer(Iter begin, Iter end, const Alloc &a)
+        : full_(false),
+          alloc_(a),
+          buffer_(alloc_.allocate(std::distance(begin, end))),
+          begin_(&buffer_[0]),
+          end_(&buffer_[0]),
+          capacity_(std::distance(begin, end))
+    {
+        std::copy(begin, end, begin());
+    }
+
+    template <class T, class Alloc>
+    circ_buffer<T, Alloc>::circ_buffer(const circ_buffer &circ)
+        : full_(circ.full_),
+          alloc_(circ.alloc_),
+          buffer_(alloc_.allocate(circ.capacity_)),
+          begin_(circ.begin_),
+          end_(circ.end_),
+          capacity_(circ.capacity_)
+    {
+        std::copy(circ.buffer_, circ.buffer_ + capacity_, buffer_);
+    }
+
+    template <class T, class Alloc>
+    circ_buffer<T, Alloc>::circ_buffer(circ_buffer &&circ) noexcept
+        : full_(circ.full_),
+          alloc_(std::move(circ.alloc_)),
+          buffer_(circ.buffer_),
+          begin_(circ.begin_),
+          end_(circ.end_),
+          capacity_(circ.capacity_)
+    {
+        circ.full_ = true;
+        circ.begin_ = nullptr;
+        circ.end_ = nullptr;
+        capacity_ = 0;
+    }
+
+    template <class T, class Alloc>
+    circ_buffer<T, Alloc> &circ_buffer<T, Alloc>::operator=(const circ_buffer &circ)
+    {
+        alloc_.deallocate(buffer_, capacity_);
+        full_ = circ.full_;
+        alloc_ = circ.alloc_;
+        buffer_ = alloc_.allocate(circ.capacity_);
+        begin_ = circ.begin_;
+        end_ = circ.end_;
+        capacity_ = circ.capacity_;
+        std::copy(circ.buffer_, circ.buffer_ + capacity_, buffer_);
+        return *this;
+    }
+
+    template <class T, class Alloc>
+    circ_buffer<T, Alloc> &circ_buffer<T, Alloc>::operator=(circ_buffer &&circ) noexcept
+    {
+        alloc_.deallocate(buffer_, capacity_);
+        full_ = circ.full_;
+        alloc_ = std::move(circ.alloc_);
+        buffer_ = circ.buffer_;
+        begin_ = circ.begin_;
+        end_ = circ.end_;
+        capacity_ = circ.capacity_;
+        circ.full_ = true;
+        circ.buffer_ = nullptr;
+        circ.begin_ = nullptr;
+        circ.end_ = nullptr;
+        circ.capacity_ = 0;
+        return *this;
     }
 
     template <class T, class Alloc>
