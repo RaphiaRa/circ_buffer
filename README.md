@@ -5,7 +5,7 @@ Copy the header file into your project and rename the namespace to whatever you 
 **Usage**  
 The usage of the circular buffer is similar to that of a STL container.
 The circular buffer is initialized with a fixed buffer size, no hidden allocations
-are done while using the circular buffer. Just like with STL containers, a custom allocator can be used if neded (std::allocator is used by default).
+are done while using the circular buffer. Just like with STL containers, a custom allocator can be used if needed (std::allocator is used by default).
 ```c++
 #include "circ_buffer.hpp"
 #include <iostream>
