@@ -53,6 +53,8 @@ namespace raphia
         using reverse_iterator = std::reverse_iterator<iterator>;
         using const_reverse_iterator = std::reverse_iterator<const_iterator>;
 
+        /** Constructors **/
+
         /** circ_buffer
          * @brief default constructor
          */
@@ -80,6 +82,15 @@ namespace raphia
          */
         circ_buffer(circ_buffer &&) noexcept;
 
+        /** Destructor **/
+
+        /** ~circ_buffer
+         * @brief deconstructor
+         */
+        virtual ~circ_buffer();
+
+        /** Copy/Move operators **/
+
         /** operator=
          * @brief copy operator
          */
@@ -90,10 +101,7 @@ namespace raphia
          */
         circ_buffer<T, Alloc> &operator=(circ_buffer &&) noexcept;
 
-        /** ~circ_buffer
-         * @brief deconstructor
-         */
-        virtual ~circ_buffer();
+        /** Iterators **/
 
         /** begin
          * @brief retrieves an iterator the first element
@@ -143,6 +151,8 @@ namespace raphia
          */
         const_reverse_iterator crend() const noexcept;
 
+        /** Inserters **/
+
         /** push_back
          * @brief add a value to the end of the circular buffer, 
          * if the buffer is full, the first element will be overwritten
@@ -171,6 +181,37 @@ namespace raphia
          */
         void push_front(const value_type &a);
 
+        /** pop_front
+         * @brief remove the first element from the buffer
+         */
+        void pop_front();
+
+        /** pop_front
+         * @brief remove the last element from the buffer
+         */
+        void pop_back();
+
+        /** emblace_front
+         * @brief constructs a new object at the front of the buffer
+         * @returns a reference to the newly constructed object
+         */
+        template <class... Args>
+        reference emblace_front(Args &&...args);
+
+        /** emblace_back
+         * @brief constructs a new object at the back of the buffer
+         * @returns a reference to the newly constructed object
+         */
+        template <class... Args>
+        reference emblace_back(Args &&...args);
+
+        /** clear
+         * @brief clear the buffer
+         */
+        void clear() noexcept;
+
+        /** Capacity Methods **/
+
         /** size
          * @brief return the current count of elements in the buffer
          * @return current element count in the buffer
@@ -183,15 +224,13 @@ namespace raphia
          */
         bool empty() const noexcept;
 
-        /** pop_front
-         * @brief remove the first element from the buffer
+        /** capacity
+         * @brief get the buffer capacity
+         * @return buffer capacity
          */
-        void pop_front();
+        size_type capacity() const noexcept;
 
-        /** pop_front
-         * @brief remove the last element from the buffer
-         */
-        void pop_back();
+        /** Accessors **/
 
         /** front
          * @brief access the first element in the buffer
@@ -235,30 +274,19 @@ namespace raphia
          */
         const_reference &operator[](int idx) const;
 
-        /** operator[]
+        /** at
          * @brief access an element by index
          * @return reference to the element at the given index
          * @throw out_of_range exception if the index lies not in the buffer range
          */
         reference &at(int idx);
 
-        /** operator[]
+        /** at
          * @brief access an element by index
          * @return const reference to the element at the given index
          * @throw out_of_range exception if the index lies not in the buffer range
          */
         const_reference &at(int idx) const;
-
-        /** capacity
-         * @brief get the buffer capacity
-         * @return buffer capacity
-         */
-        size_type capacity() const noexcept;
-
-        /** clear
-         * @brief clear the buffer
-         */
-        void clear() noexcept;
 
     private:
         Alloc alloc_;
@@ -515,7 +543,10 @@ namespace raphia
             pop_back();
         if (begin_ == &buffer_[0])
             begin_ = &buffer_[capacity_];
-        *(--begin_) = std::move(a);
+        if (std::is_class<T>::value)
+            new (--begin_) T(a);
+        else
+            *(--begin_) = std::move(a);
         ++end_off_;
     }
 
@@ -526,7 +557,10 @@ namespace raphia
             pop_back();
         if (begin_ == &buffer_[0])
             begin_ = &buffer_[capacity_];
-        *(--begin_) = a;
+        if (std::is_class<T>::value)
+            new (--begin_) T(a);
+        else
+            *(--begin_) = a;
         ++end_off_;
     }
 
@@ -549,7 +583,7 @@ namespace raphia
         if (size() > 0)
         {
             if (std::is_class<T>::value)
-                *begin_ = T();
+                begin_->~T();
             if (++begin_ == &buffer_[capacity_])
                 begin_ = &buffer_[0];
             --end_off_;
@@ -562,9 +596,35 @@ namespace raphia
         if (size() > 0)
         {
             if (std::is_class<T>::value)
-                back() = T();
+                back().~T();
             --end_off_;
         }
+    }
+
+    template <class T, class Alloc>
+    template <class... Args>
+    typename circ_buffer<T, Alloc>::reference circ_buffer<T, Alloc>::emblace_front(Args &&...args)
+    {
+        if (end_off_ == capacity_)
+            pop_back();
+        if (begin_ == &buffer_[0])
+            begin_ = &buffer_[capacity_];
+        --begin_;
+        std::allocator_traits<Alloc>::construct(alloc_, begin_, std::forward<Args>(args)...);
+        ++end_off_;
+        return *begin_;
+    }
+
+    template <class T, class Alloc>
+    template <class... Args>
+    typename circ_buffer<T, Alloc>::reference circ_buffer<T, Alloc>::emblace_back(Args &&...args)
+    {
+        if (end_off_ == capacity_)
+            pop_front();
+        auto p = begin_ + end_off_ < &buffer_[capacity_] ? begin_ + end_off_ : begin_ + end_off_ - capacity_;
+        std::allocator_traits<Alloc>::construct(alloc_, p, std::forward<Args>(args)...);
+        ++end_off_;
+        return *p;
     }
 
     template <class T, class Alloc>

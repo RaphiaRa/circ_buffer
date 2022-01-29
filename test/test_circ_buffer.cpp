@@ -222,6 +222,56 @@ TEST_CASE("circ_buffer::push_front()", "[inserter]")
     }
 }
 
+TEST_CASE("circ_buffer::emblace_front()", "[inserter]")
+{
+    class TestObject
+    {
+    public:
+        TestObject(int a, int b, int c)
+            : a_(a), b_(b), c_(c) {}
+        int a_;
+        int b_;
+        int c_;
+    };
+    raphia::circ_buffer<TestObject> circ(8);
+
+    SECTION("emblace one object")
+    {
+        circ.emblace_front(10, 20, 30);
+        SECTION("the first element contains the values it was initialized with")
+        {
+            CHECK(circ.front().a_ == 10);
+            CHECK(circ.front().b_ == 20);
+            CHECK(circ.front().c_ == 30);
+        }
+    }
+}
+
+TEST_CASE("circ_buffer::emblace_back()", "[inserter]")
+{
+    class TestObject
+    {
+    public:
+        TestObject(int a, int b, int c)
+            : a_(a), b_(b), c_(c) {}
+        int a_;
+        int b_;
+        int c_;
+    };
+    raphia::circ_buffer<TestObject> circ(8);
+
+    SECTION("emblace one object")
+    {
+        circ.emblace_back(10, 20, 30);
+        SECTION("the first element contains the values it was initialized with")
+        {
+            CHECK(circ.back().a_ == 10);
+            CHECK(circ.back().b_ == 20);
+            CHECK(circ.back().c_ == 30);
+        }
+    }
+}
+
 TEST_CASE("circ_buffer::iterator::operator++", "[increment]")
 {
     std::string str = "Hello World";
