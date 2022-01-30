@@ -281,9 +281,20 @@ TEST_CASE("circ_buffer::resize()", "[modifier]")
         {
             std::string str = "Hello";
             std::copy(str.begin(), str.end(), std::back_inserter(circ));
-            SECTION("resize the buffer")
+            SECTION("resize the buffer capacity")
             {
-                circ.resize(64);
+                circ.set_capacity(64);
+                SECTION("content is ok")
+                {
+                    CHECK(std::string(circ.begin(), circ.end()) == "Hello");
+                }
+            }
+            SECTION("read buffer and write more")
+            {
+                while (!circ.empty())
+                    circ.pop_front();
+                std::copy(str.begin(), str.end(), std::back_inserter(circ));
+                circ.set_capacity(64);
                 SECTION("content is ok")
                 {
                     CHECK(std::string(circ.begin(), circ.end()) == "Hello");
@@ -301,7 +312,7 @@ TEST_CASE("circ_buffer::resize()", "[modifier]")
                 circ.push_back(p);
             SECTION("resize the buffer")
             {
-                circ.resize(64);
+                circ.set_capacity(64);
                 SECTION("content is ok")
                 {
                     CHECK(p.use_count() == 6);

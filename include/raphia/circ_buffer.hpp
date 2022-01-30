@@ -210,10 +210,10 @@ namespace raphia
          */
         void clear() noexcept;
 
-        /** resize
-         * @brief resize the buffer
+        /** set_capacity
+         * @brief set_capacity the buffer
          */
-        void resize(size_type);
+        void set_capacity(size_type);
 
         /** Capacity Methods **/
 
@@ -726,10 +726,8 @@ namespace raphia
     }
 
     template <class T, class Alloc>
-    void circ_buffer<T, Alloc>::resize(size_type size)
+    void circ_buffer<T, Alloc>::set_capacity(size_type size)
     {
-        if (size <= capacity_)
-            return;
         auto new_buffer = alloc_.allocate(size);
         size_type offset = 0;
         for (auto iter = begin(); iter != end(); ++iter)
