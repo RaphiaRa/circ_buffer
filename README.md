@@ -53,7 +53,7 @@ Output:
 ```bash
 >> ello
 ```
-The behaviour of the ring buffer is similar when emblace_back is used.
+The behaviour is similar when emblace_back is used.
 On the contrary, if data is pushed into the buffer via push_front, then
 the data in the back will be overwritten if the buffer is full.
 
