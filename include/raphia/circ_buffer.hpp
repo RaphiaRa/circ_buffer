@@ -420,7 +420,7 @@ namespace raphia
     {
         circ.begin_ = nullptr;
         circ.end_off_ = 0;
-        capacity_ = 0;
+        circ.capacity_ = 0;
     }
 
     template <class T, class Alloc>
