@@ -267,24 +267,10 @@ namespace raphia
 
         /** operator[]
          * @brief access an element by index
-         * @return reference to the element at the given index
-         * @throw out_of_range exception if the index lies not in the buffer range
-         */
-        reference &operator[](int idx);
-
-        /** operator[]
-         * @brief access an element by index
          * @return const reference to the element at the given index
          * @throw out_of_range exception if the index lies not in the buffer range
          */
-        const_reference &operator[](int idx) const;
-
-        /** at
-         * @brief access an element by index
-         * @return reference to the element at the given index
-         * @throw out_of_range exception if the index lies not in the buffer range
-         */
-        reference &at(int idx);
+        const_reference &operator[](int idx) const noexcept;
 
         /** at
          * @brief access an element by index
@@ -669,32 +655,8 @@ namespace raphia
     }
 
     template <class T, class Alloc>
-    typename circ_buffer<T, Alloc>::reference circ_buffer<T, Alloc>::operator[](int idx)
+    typename circ_buffer<T, Alloc>::const_reference circ_buffer<T, Alloc>::operator[](int idx) const noexcept
     {
-        if (idx < 0 || idx >= size())
-            throw std::out_of_range("circ_buffer: index out of range");
-        T *p = begin_ + idx;
-        if (p >= &buffer_[capacity_])
-            p -= capacity_;
-        return *p;
-    }
-
-    template <class T, class Alloc>
-    typename circ_buffer<T, Alloc>::const_reference circ_buffer<T, Alloc>::operator[](int idx) const
-    {
-        if (idx < 0 || idx >= size())
-            throw std::out_of_range("circ_buffer: index out of range");
-        T *p = begin_ + idx;
-        if (p >= &buffer_[capacity_])
-            p -= capacity_;
-        return *p;
-    }
-
-    template <class T, class Alloc>
-    typename circ_buffer<T, Alloc>::reference circ_buffer<T, Alloc>::at(int idx)
-    {
-        if (idx < 0 || idx >= size())
-            throw std::out_of_range("circ_buffer: index out of range");
         T *p = begin_ + idx;
         if (p >= &buffer_[capacity_])
             p -= capacity_;
