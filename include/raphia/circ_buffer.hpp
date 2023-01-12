@@ -154,28 +154,28 @@ namespace raphia
         /** Modifiers **/
 
         /** push_back
-         * @brief add a value to the end of the circular buffer, 
+         * @brief add a value to the end of the circular buffer,
          * if the buffer is full, the first element will be overwritten
          * @param a value to be added
          */
         void push_back(value_type &&a);
 
         /** push_back
-         * @brief add a value to the end of the circular buffer, 
+         * @brief add a value to the end of the circular buffer,
          * if the buffer is full, the first element will be overwritten
          * @param a value to be added
          */
         void push_back(const value_type &a);
 
         /** push_front
-         * @brief add a value to the front of the circular buffer, 
+         * @brief add a value to the front of the circular buffer,
          * if the buffer is full, the last element will be overwritten
          * @param a value to be added
          */
         void push_front(value_type &&a);
 
         /** push_front
-         * @brief push a value to the front of the circular buffer, 
+         * @brief push a value to the front of the circular buffer,
          * if the buffer is full, the last element will be overwritten
          * @param a value to be added
          */
@@ -282,8 +282,8 @@ namespace raphia
     private:
         Alloc alloc_;
         T *buffer_;
-        T *begin_;
-        size_type end_off_;
+        size_type head_;
+        size_type tail_;
         size_type capacity_;
     };
 
@@ -292,9 +292,7 @@ namespace raphia
     typename circ_buffer<T, Alloc>::template basic_iterator<Container, ValueType>::reference
     circ_buffer<T, Alloc>::basic_iterator<Container, ValueType>::operator*() const
     {
-        auto p = circ_.begin_ + offset_;
-        p = p < &circ_.buffer_[circ_.capacity_] ? p : p - circ_.capacity_;
-        return *p;
+        return circ_.buffer_[(circ_.head_ + offset_) % circ_.capacity_];
     }
 
     template <class T, class Alloc>
@@ -302,9 +300,7 @@ namespace raphia
     typename circ_buffer<T, Alloc>::template basic_iterator<Container, ValueType>::pointer
     circ_buffer<T, Alloc>::basic_iterator<Container, ValueType>::operator->()
     {
-        auto p = circ_.begin_ + offset_;
-        p = p < &circ_.buffer_[circ_.capacity_] ? p : p - circ_.capacity_;
-        return p;
+        return &circ_.buffer_[(circ_.head_ + offset_) % circ_.capacity_];
     }
 
     template <class T, class Alloc>
@@ -357,8 +353,8 @@ namespace raphia
     circ_buffer<T, Alloc>::circ_buffer(const Alloc &a)
         : alloc_(a),
           buffer_(nullptr),
-          begin_(nullptr),
-          end_off_(0),
+          head_(0),
+          tail_(0),
           capacity_(0)
     {
     }
@@ -367,8 +363,8 @@ namespace raphia
     circ_buffer<T, Alloc>::circ_buffer(size_type count, const Alloc &a)
         : alloc_(a),
           buffer_(alloc_.allocate(count)),
-          begin_(&buffer_[0]),
-          end_off_(0),
+          head_(0),
+          tail_(0),
           capacity_(count)
     {
     }
@@ -378,8 +374,8 @@ namespace raphia
     circ_buffer<T, Alloc>::circ_buffer(Iter begin, Iter end, const Alloc &a)
         : alloc_(a),
           buffer_(alloc_.allocate(std::distance(begin, end))),
-          begin_(&buffer_[0]),
-          end_off_(0),
+          head_(0),
+          tail_(0),
           capacity_(std::distance(begin, end))
     {
         std::copy(begin, end, std::back_inserter(*this));
@@ -389,8 +385,8 @@ namespace raphia
     circ_buffer<T, Alloc>::circ_buffer(const circ_buffer &circ)
         : alloc_(circ.alloc_),
           buffer_(alloc_.allocate(circ.capacity_)),
-          begin_(circ.begin_),
-          end_off_(circ.end_off_),
+          head_(circ.head_),
+          tail_(circ.tail_),
           capacity_(circ.capacity_)
     {
         std::copy(circ.buffer_, circ.buffer_ + capacity_, buffer_);
@@ -400,8 +396,8 @@ namespace raphia
     circ_buffer<T, Alloc>::circ_buffer(circ_buffer &&circ) noexcept
         : alloc_(std::move(circ.alloc_)),
           buffer_(circ.buffer_),
-          begin_(circ.begin_),
-          end_off_(circ.end_off_),
+          head_(circ.head_),
+          tail_(circ.tail_),
           capacity_(circ.capacity_)
     {
         circ.begin_ = nullptr;
@@ -415,8 +411,8 @@ namespace raphia
         alloc_.deallocate(buffer_, capacity_);
         alloc_ = circ.alloc_;
         buffer_ = alloc_.allocate(circ.capacity_);
-        begin_ = circ.begin_;
-        end_off_ = circ.end_off_;
+        head_ = circ.head_;
+        tail_ = circ.tail_;
         capacity_ = circ.capacity_;
         std::copy(circ.buffer_, circ.buffer_ + capacity_, buffer_);
         return *this;
@@ -428,12 +424,12 @@ namespace raphia
         alloc_.deallocate(buffer_, capacity_);
         alloc_ = std::move(circ.alloc_);
         buffer_ = circ.buffer_;
-        begin_ = circ.begin_;
-        end_off_ = circ.end_off_;
+        head_ = circ.head_;
+        tail_ = circ.tail_;
         capacity_ = circ.capacity_;
         circ.buffer_ = nullptr;
-        circ.begin_ = nullptr;
-        circ.end_off_ = 0;
+        circ.head_ = 0;
+        circ.tail_ = 0;
         circ.capacity_ = 0;
         return *this;
     }
@@ -456,7 +452,7 @@ namespace raphia
     typename circ_buffer<T, Alloc>::iterator
     circ_buffer<T, Alloc>::end() noexcept
     {
-        return iterator(end_off_, *this);
+        return iterator(tail_ - head_, *this);
     }
 
     template <class T, class Alloc>
@@ -470,7 +466,7 @@ namespace raphia
     typename circ_buffer<T, Alloc>::const_iterator
     circ_buffer<T, Alloc>::cend() const noexcept
     {
-        return const_iterator(end_off_, *this);
+        return const_iterator(tail_ - head_, *this);
     }
 
     template <class T, class Alloc>
@@ -504,68 +500,68 @@ namespace raphia
     template <class T, class Alloc>
     void circ_buffer<T, Alloc>::push_back(value_type &&a)
     {
-        if (end_off_ == capacity_)
+        if (tail_ - head_ == capacity_)
             pop_front();
-        auto p = begin_ + end_off_ < &buffer_[capacity_] ? begin_ + end_off_ : begin_ + end_off_ - capacity_;
+        auto p = &buffer_[tail_ % capacity_];
         if (std::is_class<T>::value)
             std::allocator_traits<Alloc>::construct(alloc_, p, std::move(a));
         else
             *p = std::move(a);
-        ++end_off_;
+        ++tail_;
     }
 
     template <class T, class Alloc>
     void circ_buffer<T, Alloc>::push_back(const value_type &a)
     {
-        if (end_off_ == capacity_)
+        if (tail_ - head_ == capacity_)
             pop_front();
-        auto p = begin_ + end_off_ < &buffer_[capacity_] ? begin_ + end_off_ : begin_ + end_off_ - capacity_;
+        auto p = &buffer_[tail_ % capacity_];
         if (std::is_class<T>::value)
             std::allocator_traits<Alloc>::construct(alloc_, p, a);
         else
-            *p = std::move(a);
-        ++end_off_;
+            *p = a;
+        ++tail_;
     }
 
     template <class T, class Alloc>
     void circ_buffer<T, Alloc>::push_front(value_type &&a)
     {
-        if (end_off_ == capacity_)
+        if (tail_ - head_ == capacity_)
             pop_back();
-        if (begin_ == &buffer_[0])
-            begin_ = &buffer_[capacity_];
+        std::size_t new_head = head_ - 1;
+        auto p = &buffer_[new_head % capacity_];
         if (std::is_class<T>::value)
-            std::allocator_traits<Alloc>::construct(alloc_, --begin_, std::move(a));
+            std::allocator_traits<Alloc>::construct(alloc_, p, std::move(a));
         else
-            *(--begin_) = std::move(a);
-        ++end_off_;
+            *p = std::move(a);
+        head_ = new_head;
     }
 
     template <class T, class Alloc>
     void circ_buffer<T, Alloc>::push_front(const value_type &a)
     {
-        if (end_off_ == capacity_)
+        if (tail_ - head_ == capacity_)
             pop_back();
-        if (begin_ == &buffer_[0])
-            begin_ = &buffer_[capacity_];
+        std::size_t new_head = head_ - 1;
+        auto p = &buffer_[new_head % capacity_];
         if (std::is_class<T>::value)
-            std::allocator_traits<Alloc>::construct(alloc_, --begin_, a);
+            std::allocator_traits<Alloc>::construct(alloc_, p, a);
         else
-            *(--begin_) = a;
-        ++end_off_;
+            *p = a;
+        head_ = new_head;
     }
 
     template <class T, class Alloc>
     typename circ_buffer<T, Alloc>::size_type
     circ_buffer<T, Alloc>::size() const noexcept
     {
-        return end_off_;
+        return tail_ - head_;
     }
 
     template <class T, class Alloc>
     bool circ_buffer<T, Alloc>::empty() const noexcept
     {
-        return size() == 0;
+        return (tail_ == head_);
     }
 
     template <class T, class Alloc>
@@ -574,10 +570,8 @@ namespace raphia
         if (size() > 0)
         {
             if (std::is_class<T>::value)
-                begin_->~T();
-            if (++begin_ == &buffer_[capacity_])
-                begin_ = &buffer_[0];
-            --end_off_;
+                buffer_[head_ % capacity_].~T();
+            ++head_;
         }
     }
 
@@ -587,8 +581,8 @@ namespace raphia
         if (size() > 0)
         {
             if (std::is_class<T>::value)
-                back().~T();
-            --end_off_;
+                buffer_[(tail_ - 1) % capacity_].~T();
+            --tail_;
         }
     }
 
@@ -596,25 +590,24 @@ namespace raphia
     template <class... Args>
     typename circ_buffer<T, Alloc>::reference circ_buffer<T, Alloc>::emblace_front(Args &&...args)
     {
-        if (end_off_ == capacity_)
+        if (tail_ - head_ == capacity_)
             pop_back();
-        if (begin_ == &buffer_[0])
-            begin_ = &buffer_[capacity_];
-        --begin_;
-        std::allocator_traits<Alloc>::construct(alloc_, begin_, std::forward<Args>(args)...);
-        ++end_off_;
-        return *begin_;
+        std::size_t new_head = head_ - 1;
+        auto p = &buffer_[new_head % capacity_];
+        std::allocator_traits<Alloc>::construct(alloc_, p, std::forward<Args>(args)...);
+        head_ = new_head;
+        return *p;
     }
 
     template <class T, class Alloc>
     template <class... Args>
     typename circ_buffer<T, Alloc>::reference circ_buffer<T, Alloc>::emblace_back(Args &&...args)
     {
-        if (end_off_ == capacity_)
+        if (tail_ - head_ == capacity_)
             pop_front();
-        auto p = begin_ + end_off_ < &buffer_[capacity_] ? begin_ + end_off_ : begin_ + end_off_ - capacity_;
+        auto p = &buffer_[tail_ % capacity_];
         std::allocator_traits<Alloc>::construct(alloc_, p, std::forward<Args>(args)...);
-        ++end_off_;
+        ++tail_;
         return *p;
     }
 
@@ -623,7 +616,7 @@ namespace raphia
     {
         if (empty())
             throw std::underflow_error("circ_buffer: tried to access empty container");
-        return *begin_;
+        return buffer_[head_ % capacity_];
     }
 
     template <class T, class Alloc>
@@ -631,7 +624,7 @@ namespace raphia
     {
         if (empty())
             throw std::underflow_error("circ_buffer: tried to access empty container");
-        return *begin_;
+        return buffer_[head_ % capacity_];
     }
 
     template <class T, class Alloc>
@@ -639,9 +632,7 @@ namespace raphia
     {
         if (empty())
             throw std::underflow_error("circ_buffer: tried to access empty container");
-        auto p = begin_ + end_off_ - 1;
-        p = p < &buffer_[capacity_] ? p : p - capacity_;
-        return *p;
+        return buffer_[(tail_ - 1) % capacity_];
     }
 
     template <class T, class Alloc>
@@ -649,18 +640,13 @@ namespace raphia
     {
         if (empty())
             throw std::underflow_error("circ_buffer: tried to access empty container");
-        auto p = begin_ + end_off_ - 1;
-        p = p < &buffer_[capacity_] ? p : p - capacity_;
-        return *p;
+        return buffer_[(tail_ - 1) % capacity_];
     }
 
     template <class T, class Alloc>
     typename circ_buffer<T, Alloc>::const_reference circ_buffer<T, Alloc>::operator[](int idx) const noexcept
     {
-        T *p = begin_ + idx;
-        if (p >= &buffer_[capacity_])
-            p -= capacity_;
-        return *p;
+        return buffer_[(head_ + idx) % capacity_];
     }
 
     template <class T, class Alloc>
@@ -668,10 +654,7 @@ namespace raphia
     {
         if (idx < 0 || idx >= size())
             throw std::out_of_range("circ_buffer: index out of range");
-        T *p = begin_ + idx;
-        if (p >= &buffer_[capacity_])
-            p -= capacity_;
-        return *p;
+        return buffer_[(head_ + idx) % capacity_];
     }
 
     template <class T, class Alloc>
@@ -696,14 +679,14 @@ namespace raphia
         {
             std::allocator_traits<Alloc>::construct(alloc_, new_buffer + offset, std::move(*iter));
             ++offset;
-            offset %= size;
+            offset %= capacity_;
         }
         clear();
         alloc_.deallocate(buffer_, capacity_);
         buffer_ = new_buffer;
-        begin_ = new_buffer;
+        head_ = 0;
+        tail_ = offset;
         capacity_ = size;
-        end_off_ = offset;
     }
 } // namespace raphia
 #endif
