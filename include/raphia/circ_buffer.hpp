@@ -292,7 +292,7 @@ namespace raphia
     typename circ_buffer<T, Alloc>::template basic_iterator<Container, ValueType>::reference
     circ_buffer<T, Alloc>::basic_iterator<Container, ValueType>::operator*() const
     {
-        return circ_.buffer_[(circ_.head_ + offset_) % circ_.capacity_];
+        return circ_.buffer_[(circ_.head_ + static_cast<std::size_t>(static_cast<ptrdiff_t>(circ_.capacity_) + (offset_ % static_cast<ptrdiff_t>(circ_.capacity_))) % circ_.capacity_) % circ_.capacity_];
     }
 
     template <class T, class Alloc>
@@ -300,7 +300,7 @@ namespace raphia
     typename circ_buffer<T, Alloc>::template basic_iterator<Container, ValueType>::pointer
     circ_buffer<T, Alloc>::basic_iterator<Container, ValueType>::operator->()
     {
-        return &circ_.buffer_[(circ_.head_ + offset_) % circ_.capacity_];
+        return &circ_.buffer_[(circ_.head_ + static_cast<std::size_t>(static_cast<ptrdiff_t>(circ_.capacity_) + (offset_ % static_cast<ptrdiff_t>(circ_.capacity_))) % circ_.capacity_) % circ_.capacity_];
     }
 
     template <class T, class Alloc>
@@ -373,10 +373,10 @@ namespace raphia
     template <class Iter>
     circ_buffer<T, Alloc>::circ_buffer(Iter begin, Iter end, const Alloc &a)
         : alloc_(a),
-          buffer_(alloc_.allocate(std::distance(begin, end))),
+          buffer_(alloc_.allocate(static_cast<std::size_t>(std::distance(begin, end)))),
           head_(0),
           tail_(0),
-          capacity_(std::distance(begin, end))
+          capacity_(static_cast<std::size_t>(std::distance(begin, end)))
     {
         std::copy(begin, end, std::back_inserter(*this));
     }
@@ -452,7 +452,7 @@ namespace raphia
     typename circ_buffer<T, Alloc>::iterator
     circ_buffer<T, Alloc>::end() noexcept
     {
-        return iterator(tail_ - head_, *this);
+        return iterator(static_cast<typename const_iterator::difference_type>(tail_ - head_), *this);
     }
 
     template <class T, class Alloc>
@@ -466,7 +466,7 @@ namespace raphia
     typename circ_buffer<T, Alloc>::const_iterator
     circ_buffer<T, Alloc>::cend() const noexcept
     {
-        return const_iterator(tail_ - head_, *this);
+        return const_iterator(static_cast<typename const_iterator::difference_type>(tail_ - head_), *this);
     }
 
     template <class T, class Alloc>

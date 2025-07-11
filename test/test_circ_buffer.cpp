@@ -182,7 +182,7 @@ TEST_CASE("circ_buffer<class>::push_back()", "[modifier]")
             circ.push_back(p);
         SECTION("p use_count is circ capacity + 1")
         {
-            CHECK(p.use_count() == circ.capacity() + 1);
+            CHECK((size_t)p.use_count() == circ.capacity() + 1);
         }
     }
 }
